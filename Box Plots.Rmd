@@ -1,0 +1,81 @@
+---
+title: "Group Project Box Plots"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Plots to answer question 2 - What positions are the most duarble in a regular season?
+
+Dependencies
+```{r}
+library(tidyverse)
+```
+
+Data
+```{r}
+regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+```
+
+### Box plot of games played for each position (Regular season)
+```{r}
+regular_b1<-regular %>%
+  select(Pos, G) %>%
+  rename(Position = Pos, Games_Played = G)
+head(regular_b1)
+
+#boxplot
+ggplot(regular_b1, 
+       aes( x = Position, 
+            y = Games_Played,
+            )) +
+  geom_boxplot(color='#0B1D51', fill='#F7CB15', alpha=0.5) +
+    labs(
+    title = 'Games Played Based on Position',
+    caption = 'Kaggle, 2021-2022 NBA Player Stats
+    Center = C
+    Center-Power Forward = C-PF
+    Power Forward = PF
+    Power Forward-Small Forward = PF-SF
+    Point Guard = PG
+    Point Guard-Shooting Guard = PG-SG
+    Shooting Guard = SG
+    Shooting Guard-Point Guard = SG-PG
+    Shooting Guard-Small Forward = SG-SF') +
+  xlab('Position') +
+  ylab('Games Played') +
+  theme_minimal() #+
+  #theme(axis.text.x = element_text(angle = 90)) #if we decide to move captions to axis
+```
+
+### Box plot of minutes played for each position (Regular season)
+```{r}
+regular_b2<-regular %>%
+  select(Pos, MP) %>%
+  rename(Position = Pos, Minutes_Played_Per_Game = MP)
+head(regular_b2)
+
+#boxplot
+ggplot(regular_b2, 
+       aes( x = Position, 
+            y = Minutes_Played_Per_Game,
+            )) +
+  geom_boxplot(color='#0B1D51', fill='#F7CB15', alpha=0.5) +
+    labs(
+    title = 'Minutes Played Per Game Based on Position',
+    caption = 'Kaggle, 2021-2022 NBA Player Stats
+    Center = C
+    Center-Power Forward = C-PF
+    Power Forward = PF
+    Power Forward-Small Forward = PF-SF
+    Point Guard = PG
+    Point Guard-Shooting Guard = PG-SG
+    Shooting Guard = SG
+    Shooting Guard-Point Guard = SG-PG
+    Shooting Guard-Small Forward = SG-SF') +
+  xlab('Position') +
+  ylab('Minutes Played per Game') +
+  theme_minimal() #+
+  #theme(axis.text.x = element_text(angle = 90)) #if we decide to move captions to axis
+```
+
