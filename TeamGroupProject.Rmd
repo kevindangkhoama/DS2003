@@ -63,5 +63,5 @@ ggplot(points, aes(x = Player, y= PTS.playoffs)) +
 
 - Hank: Cleaned the dataset and added comments 
 - Kevin: Created the scatterplot and made the scatterplot readable
-- Ana: Cleaned the dataset and helped filter and sort the necessary columns for the scatterplot
+- Eva: Cleaned the dataset and helped filter and sort the necessary columns for the scatterplot
 
