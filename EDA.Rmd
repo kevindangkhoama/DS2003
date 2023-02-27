@@ -1,0 +1,81 @@
+---
+title: "EDA"
+author: "Kevin Ma"
+date: "2023-02-22"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: cosmo
+    code_folding: show
+---
+
+## Import Dependencies
+```{r message = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(skimr)
+library(pollster)
+library(kableExtra)
+```
+
+## Import Data
+```{r}
+regular <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Regular.csv")
+playoffs <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Playoffs.csv")
+```
+
+## Check Dataset
+```{r}
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+
+head(nba, 6)
+```
+
+```{r}
+nba <- nba %>%
+  select(Age.regular, Pos.regular, PTS.playoffs, PTS.regular, MP.regular, MP.playoffs)
+head(nba)
+```
+
+```{r}
+skim(nba)
+```
+
+# Question: How many players average the similar PPG
+```{r}
+ggplot(nba, aes(PTS.regular)) +
+  geom_histogram(bins = 200, fill = '#540d6e') + 
+  geom_vline(aes(xintercept = mean(PTS.regular)),col = 'lightgray', linewidth = 1) +
+  geom_vline(aes(xintercept = median(PTS.regular)), col = 'lightgray', linetype = 'dashed') +
+  labs(
+    title = 'Histogram of Regular Season Points',
+    caption = 'mean: solid line, median = dashed line'
+  ) +
+  theme_minimal()
+```
+
+# Checking for outliers and number summary for playoffs PPG
+```{r}
+ggplot(nba, aes(PTS.playoffs)) +
+  geom_boxplot(fill = '#540d6e') + 
+  labs(
+    title = 'Boxplot of PPG.playoffs'
+  ) +
+  theme_minimal()
+```
+
+# Checking for outliers and number summary for regular season PPG
+```{r}
+ggplot(nba, aes(PTS.regular)) +
+  geom_boxplot(fill = '#540d6e') + 
+  labs(
+    title = 'Boxplot of PPG.playoffs'
+  ) +
+  theme_minimal()
+```
+
+
+

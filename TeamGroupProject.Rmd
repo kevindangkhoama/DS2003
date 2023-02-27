@@ -1,0 +1,67 @@
+---
+title: "DS2003 Team Group Project"
+author: "Kevin, Hank, Eva"
+date: "2023-02-20"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: cosmo
+    code_folding: show
+---
+
+# Import Dependencies
+```{r message = FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Questions
+1) Do players perform better in the playoffs than the regular seasons in terms of PPG?
+2) Who is the most durable player in terms of MPG and GP?
+
+# Import Data
+```{r}
+regular <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Regular.csv")
+playoffs <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Playoffs.csv")
+```
+
+# Pull and Clean Dataset
+```{r}
+# Combining playoffs and regular season with .playoffs or .regular as distinctions
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+
+head(nba, 6)
+```
+
+# Which players perform better or worse in the playoffs than the regular seasons in terms of PPG?
+```{r}
+# Select Players who average >=20 PPG in the playsoffs and regular season to cut down the entries
+points <- nba %>% 
+  select(Player, PTS.regular, PTS.playoffs) %>%
+  filter(PTS.regular >= 20, PTS.playoffs >=20) %>%
+  group_by(Player) %>%
+  # If a player has multiple entries due to being traded, combine through finding the mean for the PPG columns
+  summarize(PTS.regular = mean(PTS.regular), PTS.playoffs = mean(PTS.playoffs))
+```
+
+```{r}
+ggplot(points, aes(x = Player, y= PTS.playoffs)) + 
+  # Red = playoffs
+  geom_point(color = "red") + 
+  # Blue = regular season
+  geom_point(aes(y = PTS.regular), color = "blue") + 
+  # Add labels
+  labs(title = "Player and PPG in the Regular Season (Blue) and Playsoff Season (Red)",
+       x = "Player", y = "PPG >=20") + theme_minimal() + 
+  # Rotate Player Names by 90 degrees
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+- Hank: Cleaned the dataset and added comments 
+- Kevin: Created the scatterplot and made the scatterplot readable
+- Ana: Cleaned the dataset and helped filter and sort the necessary columns for the scatterplot
+
