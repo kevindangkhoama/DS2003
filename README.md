@@ -7,9 +7,9 @@
 -Box plot of games played for each position (Regular season)
 -Box plot of minutes played for each position (Regular season)
 
-Color Palette
-Hunter Green - #2E6039
-Verdigris - #4EBCB6
-Jonquil - #F7CB15
-Penn Blue - #0B1D51
-Persimmon - #E05200
+## Color Palette
+1) Hunter Green - #2E6039
+2) Verdigris - #4EBCB6
+3) Jonquil - #F7CB15
+4) Penn Blue - #0B1D51
+5) Persimmon - #E05200
