@@ -1,0 +1,64 @@
+---
+title: "BoxPlotsProjects"
+author: "Hank Dickerson"
+date: "2023-02-27"
+output: html_document
+---
+import packages
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+read in data
+```{r}
+regular <- read.csv("/Users/harrietdickerson/Downloads/DS 2003/archive/2021-2022 NBA Player Stats - Regular.csv")
+playoffs <- read.csv("/Users/harrietdickerson/Downloads/DS 2003/archive/2021-2022 NBA Player Stats - Playoffs.csv")
+
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+```
+
+
+```{r}
+nba_filtered <- nba %>%
+  group_by(Player) %>%
+  summarize(
+    ppg_regular = mean(PTS.regular, na.rm = TRUE),
+    rpg_regular = mean(TRB.regular, na.rm = TRUE),
+    apg_regular = mean(AST.regular, na.rm = TRUE),
+    #ppg_playoffs = mean(PTS.playoffs, na.rm = TRUE),
+    #rpg_playoffs = mean(TRB.playoffs, na.rm = TRUE),
+    #apg_playoffs = mean(AST.playoffs, na.rm = TRUE)
+  ) %>%
+  filter(
+    ppg_regular >= 20 | 
+    rpg_regular >= 10 | 
+    apg_regular >= 10 
+  )
+
+View(nba_filtered)
+```
+
+
+
+
+
+```{r}
+nba_clean <- nba_filtered %>%
+  pivot_longer(cols = c("apg_regular", "ppg_regular", "rpg_regular"), names_to = "Attribute", values_to = "amount")
+
+nba_clean
+```
+
+```{r}
+ggplot(nba_clean, aes(Player, amount)) +
+    geom_point(color = "steelblue")+
+    facet_grid(Attribute ~ .) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+
+
+
