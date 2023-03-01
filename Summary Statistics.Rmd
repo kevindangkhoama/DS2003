@@ -1,0 +1,149 @@
+---
+title: "Summary Statistics"
+output:
+  html_document:
+    df_print: paged
+---
+
+Import dependencies 
+```{r}
+library(tidyverse)
+library(skimr)
+library(pollster)
+library(kableExtra)
+```
+
+Import dataset
+```{r}
+playoffs <- read.csv('2021-2022 NBA Player Stats - Playoffs.csv')
+regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+```
+
+Check dataset
+```{r}
+head(playoffs)
+head(regular)
+```
+
+Make df with combined Playoffs and Regular season PTS, AST, TRB, and STL data for players who were in BOTH
+```{r}
+# first join dfs to delete players in the regular season that do not appear in the playoffs
+joined_filtered <- merge(playoffs, regular, by='Player')
+joined_filtered
+joined_subset <- joined_filtered %>%
+  select(Player, Pos.x, MP.x, MP.y,
+         PTS.x, AST.x, TRB.x, STL.x,
+         PTS.y, AST.y, TRB.y, STL.y) %>%
+  rename(
+    Position = Pos.x,
+    Playoff_Mins_Played = MP.x,
+    Regular_Mins_Played = MP.y,
+    Playoffs_PTS = PTS.x, 
+    Playoffs_AST = AST.x, 
+    Playoffs_TRB = TRB.x, 
+    Playoffs_STL = STL.x,
+    Regular_PTS = PTS.y, 
+    Regular_AST = AST.y, 
+    Regular_TRB = TRB.y, 
+    Regular_STL = STL.y) %>%
+  distinct(Player, .keep_all = TRUE)
+
+joined_subset$Position<- as.factor(joined_subset$Position)
+
+joined_subset
+```
+
+Normalize statistics to minutes played
+```{r}
+joined_norm <- joined_subset %>%
+  mutate(
+    Playoffs_PTS = Playoffs_PTS/Playoff_Mins_Played, 
+    Playoffs_AST = Playoffs_AST/Playoff_Mins_Played, 
+    Playoffs_TRB = Playoffs_TRB/Playoff_Mins_Played, 
+    Playoffs_STL = Playoffs_STL/Playoff_Mins_Played,
+    Regular_PTS = Regular_PTS/Regular_Mins_Played, 
+    Regular_AST = Regular_AST/Regular_Mins_Played, 
+    Regular_TRB = Regular_TRB/Regular_Mins_Played, 
+    Regular_STL = Regular_STL/Regular_Mins_Played) %>%
+  select(Player, Position,
+         Playoffs_PTS, Regular_PTS,
+         Playoffs_AST, Regular_AST,
+         Playoffs_TRB, Regular_TRB,
+         Playoffs_STL, Regular_STL)
+joined_norm
+```
+
+Take percent difference between playoff and regular performance for each player
+```{r}
+Percent_Diff <- joined_norm %>%
+  group_by(Player) %>%
+  summarize(
+    "Percent Difference Points (%)" = ((abs(Playoffs_PTS-Regular_PTS))/((Playoffs_PTS+Regular_PTS)/2))*100,
+    "Percent Difference Assists (%)" = ((abs(Playoffs_AST-Regular_AST))/((Playoffs_AST+Regular_AST)/2))*100,
+    "Percent Difference Rebounds (%)" = ((abs(Playoffs_TRB-Regular_TRB))/((Playoffs_TRB+Regular_TRB)/2))*100,
+    "Percent Difference Steals (%)" = ((abs(Playoffs_STL-Regular_STL))/((Playoffs_STL+Regular_STL)/2))*100) %>%
+  mutate_if(is.double, round, digits = 2) #source: https://universeofdatascience.com/how-to-round-data-frame-containing-character-variables-in-r/#more-913
+Percent_Diff$Position <- joined_subset$Position
+Percent_Diff
+```
+
+
+Generate summaries
+```{r}
+summary(joined_subset)
+summary(Percent_Diff)
+```
+
+## Summarize the pertinent data using descriptive statistics.
+Your analysis should include a robust summary of the pertinent variables from your 
+dataset. Use well formatted tables and data viz to show your summary descriptives
+
+## Summary Statistics {.tabset}
+
+### 1) How does NBA success translate from playoffs to the regular season? {.tabset}
+
+#### Percent Difference by Player
+```{r}
+
+Percent_Diff_by_Players <- Percent_Diff %>%
+  select(Player, `Percent Difference Points (%)`,`Percent Difference Assists (%)`, `Percent Difference Rebounds (%)`, `Percent Difference Steals (%)`)
+
+Percent_Diff_by_Players %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+#### Percent Difference by Position {.tabset}
+```{r}
+Percent_Diff_by_Position <- Percent_Diff %>%
+  group_by(Position) %>%
+  summarize(
+    "Mean Percent Difference Points (%)" = mean(`Percent Difference Points (%)`),
+    "Mean Percent Difference Assists (%)" = mean(`Percent Difference Assists (%)`),
+    "Mean Percent Difference Rebounds (%)" = mean(`Percent Difference Rebounds (%)`),
+    "Mean Percent Difference Steals (%)" = mean(`Percent Difference Steals (%)`)) %>%
+  mutate_if(is.double, round, digits = 2)
+  
+Percent_Diff_by_Position %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+
+### 2) What positions are the most durable in a regular season? {.tabset}
+```{r}
+regular_subset <- regular %>%
+  select(Player, Pos, G, MP) %>%
+  group_by(Pos) %>%
+  summarize("Average Time Played Per Game" = mean(MP),
+         "Average Games Played" = mean(G))
+regular_subset %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+-Box plot of games played for each position (Regular season)
+-Box plot of minutes played for each position (Regular season)
