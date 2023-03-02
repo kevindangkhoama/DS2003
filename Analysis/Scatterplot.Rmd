@@ -1,5 +1,5 @@
 ---
-title: "DS2003 Team Group Project"
+title: "Scatterplot"
 author: "Kevin, Hank, Eva"
 date: "2023-02-20"
 output: 
