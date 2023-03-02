@@ -1,0 +1,97 @@
+---
+title: "Facet-Wrapped Graph"
+author: "Kevin, Hank, Eva"
+date: "2023-03-01"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: cosmo
+    code_folding: show
+---
+
+# Import Dependencies
+```{r message = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+```
+
+# Import Data
+```{r}
+regular <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Regular.csv")
+playoffs <- read.csv("/Users/kevinma/Desktop/UVA/DS2003/Team Group Project/2021-2022 NBA Player Stats - Playoffs.csv")
+```
+
+# Pull and Clean Dataset
+```{r}
+# Combining playoffs and regular season with .playoffs or .regular as distinctions
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+
+head(nba, 6)
+```
+
+# Which players perform better or worse in the playoffs than the regular seasons in terms of PPG, RPG, and APG?
+```{r}
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+
+# filter to only include nba players who average more than:
+# >= 20 ppg in the regular or playoff or
+# >= 10 rpg in the regular or playoff or
+# >= 10 apg in the regular or playoff
+nba_filtered <- nba %>%
+  group_by(Player) %>%
+  summarize(
+    PPG_regular = round(mean(PTS.regular, na.rm = TRUE), 2),
+    RPG_regular = round(mean(TRB.regular, na.rm = TRUE), 2),
+    APG_regular = round(mean(AST.regular, na.rm = TRUE), 2),
+    PPG_playoffs = round(mean(PTS.playoffs, na.rm = TRUE), 2),
+    RPG_playoffs = round(mean(TRB.playoffs, na.rm = TRUE), 2),
+    APG_playoffs = round(mean(AST.playoffs, na.rm = TRUE), 2)
+  ) %>%
+  filter(
+    PPG_regular >= 20 | PPG_playoffs >= 20 |
+    RPG_regular >= 10 | RPG_playoffs >= 10 |
+    APG_regular >= 10 | APG_playoffs >= 10
+  )
+
+# Manully fix players who have accents in their name
+nba_filtered$Player[22] <- "Jonas Valanciunas"
+nba_filtered$Player[28] <- "Luka Doncic"
+nba_filtered$Player[29] <- "Nikola Jokic"
+nba_filtered$Player[30] <- "Nikola Vucevic"
+
+
+# tidy format that can be plotted with ggplot
+nba_tidy <- nba_filtered %>%
+  select(Player, PPG_regular, RPG_regular, APG_regular, PPG_playoffs, RPG_playoffs, APG_playoffs) %>%
+  gather(key, value, -Player) %>%
+  separate(key, into = c("Attribute", "Season"), sep = "_") %>%
+  spread(Season, value)
+```
+
+```{r}
+# pivot the data to a wide format that can be used with geom_point()
+nba_pivot<- nba_tidy %>%
+  pivot_longer(cols = c("regular", "playoffs"), names_to = "Season", values_to = "amount") %>%
+  separate(Attribute, into = c("Stat", "Type"), sep = "_") %>%
+  pivot_wider(names_from = Season, values_from = amount)
+
+# set the levels in desired order
+nba_pivot$Stat <- factor(nba_pivot$Stat, levels = c("PPG", "RPG", "APG"))
+
+# plot facet-wrapped graph
+ggplot(nba_pivot, aes(Player, regular, color = "Regular")) +
+  geom_point() +
+  geom_point(aes(Player, playoffs, color = "Playoff")) +
+  facet_grid(Stat ~ ., scales = "free_y") +
+  scale_color_manual(name = "Season", values = c("Regular" = "steelblue", "Playoff" = "red")) +
+  labs(title = "Regular Season vs Playoff Season Averages") +
+  labs(x = "", y ="") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```                
+
