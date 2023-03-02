@@ -1,5 +1,7 @@
 # DS2003
 
+Dataset: https://www.kaggle.com/datasets/vivovinco/nba-player-stats
+
 ## Questions:
 1) How does NBA success translate from playoffs to the regular season? (explore scoring in playoffs vs regular season)
 -Scatter plot with two colored poins (playoffs and regular) with stats
