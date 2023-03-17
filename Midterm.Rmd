@@ -1,5 +1,6 @@
 ---
 title: "DS 2003 Midterm Report"
+subtitle: "Exploring NBA 2021-2022 Stats"
 author: "Kevin Ma, Eva Massarelli, Hank Dickerson"
 date: "3-17-2023"
 output: 
@@ -13,11 +14,11 @@ output:
 # Executive Summary
 This report utilizes NBA data to create clear and informative plots that demonstrate differences in NBA seasons and positions. This report is geared towards readers looking to understand more about how different players perform in the playoffs vs during the regular season and which positions in the NBA let players have the most playtime. Stakeholders interested in this may be recruiters, coaches, or fantasy league players.
 
-**MUST highlight the key findings**
+Our key findings were that though, average performance between player's performance in the playoffs and regular season were close, players tended to play slightly worse in the regular season than in the playoffs. There are many reasons for this which could include the playoffs being very high stakes as the NBA title is determined by them and that there are fewer games than in the regular season. We also found that the positions of power-forward and centers played the most games but also had the least playing time per game. We found this interesting and thought it may be a valuable thing for coaches to know as they plan substitutes.
 
 
 # Report Dependencies
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
@@ -28,15 +29,44 @@ library(kableExtra)
 
 
 # Data Set
-Our data, ["2021-2022 NBA Player Stats,"](https://www.kaggle.com/datasets/vivovinco/nba-player-stats) was found on Kaggle and is owned by Vivo Vinco.
+Our data, ["2021-2022 NBA Player Stats,"](https://www.kaggle.com/datasets/vivovinco/nba-player-stats) was found on Kaggle and is owned by Vivo Vinco. We accessed the data through mid-February to mid-March.
 
 Import data
 ```{r}
 playoffs <- read.csv('2021-2022 NBA Player Stats - Playoffs.csv')
+playoffs %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+
 regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+regular %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
 ```
 
-### Data used to answer question 1
+#### Pertinent Data Dictionary
+|Abbreviation|Definition|
+|------------|-------|
+|Rk|Rank|
+|Player|Player's Name|
+|Pos|Position|
+|Age|Player's age|
+|Tm|Team|
+|G|Games played|
+|GS|Games started|
+|MP|Minutes played per game|
+|FT|Free throws per game|
+|TRB|Total rebounds per game|
+|ASR|Assists per game|
+|STL|Steals per game|
+|BLK|Blocks per game|
+|TOV|Turnovers per game|
+|PF|Personal fouls per game|
+|PTS|Points per game|
+
+### Data transformations used to answer question 1
 
 #### To make facet wrap graph
 Pull and Clean Dataset
@@ -46,7 +76,7 @@ nba <- playoffs %>%
   left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
 ```
 Which players perform better or worse in the playoffs than the regular seasons in terms of PPG, RPG, and APG?
-```{r}
+```{r, message=FALSE}
 nba <- playoffs %>%
   left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
 # filter to only include nba players who average more than:
@@ -68,7 +98,7 @@ nba_filtered <- nba %>%
     RPG_regular >= 10 | RPG_playoffs >= 10 |
     APG_regular >= 10 | APG_playoffs >= 10
   )
-# Manully fix players who have accents in their name
+# Manually fix players who have accents in their name
 nba_filtered$Player[22] <- "Jonas Valanciunas"
 nba_filtered$Player[28] <- "Luka Doncic"
 nba_filtered$Player[29] <- "Nikola Jokic"
@@ -92,6 +122,53 @@ nba_pivot<- nba_tidy %>%
   pivot_wider(names_from = Season, values_from = amount)
 # set the levels in desired order
 nba_pivot$Stat <- factor(nba_pivot$Stat, levels = c("PPG", "RPG", "APG"))
+```
+
+### Data to make box plots
+```{r}
+# Box plot 1 shows the amount of games each position plays
+regular_b1<-regular %>%
+  select(Pos, G) %>% # we only need these two columns
+  rename(Position = Pos, Games_Played = G)
+
+# Box plot 2 shows the minutes played per game by each position
+regular_b2<-regular %>%
+  select(Pos, MP) %>% # we only need these two columns
+  rename(Position = Pos, Minutes_Played_Per_Game = MP)
+```
+
+
+# Background/Questions
+As a group we found that we all had a common interest in basketball, especially with March Madness approaching. Additionally, it is simple to find stats tracking performance of players in sports. Knowing this, we explored some datasets on Kaggle and found an interesting one that included NBA stats on playoffs and regular seasons from 2021-2022.
+
+We thought it would be interesting to see how a player's performance differs between the playoffs and regular seasons. The regular season is obviously a major part of the season and getting into the playoffs but we felt it was important to see how players stepped up to the pressure of being in the playoffs and winning when it mattered.This led to us wondering if there was a difference between a player’s position and how long they are able to remain in the league. For example, players who play a guard position are oftentimes shorter than someone who plays a position like a center. In general those who are taller seem to be less durable and we wanted to see if this applied in the NBA.
+
+
+# Exploratory Data Anaylsis
+Pull and Clean Dataset
+```{r}
+# Combining playoffs and regular season with .playoffs or .regular as distinctions
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+nba %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+Which players perform better or worse in the playoffs than the regular seasons in terms of PPG?
+```{r}
+# Select Players who average >=20 PPG in the playsoffs and regular season to cut down the entries
+points <- nba %>% 
+  select(Player, PTS.regular, PTS.playoffs) %>%
+  filter(PTS.regular >= 20, PTS.playoffs >=20) %>%
+  group_by(Player) %>%
+  # If a player has multiple entries due to being traded, combine through finding the mean for the PPG columns
+  summarize(PTS.regular = mean(PTS.regular), PTS.playoffs = mean(PTS.playoffs))
+points %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
 ```
 
 #### To make summary statistics
@@ -119,66 +196,98 @@ joined_subset <- joined_filtered %>%
     Regular_STL = STL.y) %>%
   distinct(Player, .keep_all = TRUE)
 joined_subset$Position<- as.factor(joined_subset$Position)
+
+# Normalize statistics to minutes played
+joined_norm <- joined_subset %>%
+  mutate(
+    Playoffs_PTS = Playoffs_PTS/Playoff_Mins_Played, 
+    Playoffs_AST = Playoffs_AST/Playoff_Mins_Played, 
+    Playoffs_TRB = Playoffs_TRB/Playoff_Mins_Played, 
+    Playoffs_STL = Playoffs_STL/Playoff_Mins_Played,
+    Regular_PTS = Regular_PTS/Regular_Mins_Played, 
+    Regular_AST = Regular_AST/Regular_Mins_Played, 
+    Regular_TRB = Regular_TRB/Regular_Mins_Played, 
+    Regular_STL = Regular_STL/Regular_Mins_Played) %>%
+  select(Player, Position,
+         Playoffs_PTS, Regular_PTS,
+         Playoffs_AST, Regular_AST,
+         Playoffs_TRB, Regular_TRB,
+         Playoffs_STL, Regular_STL)
+
+# Take percent difference between playoff and regular performance for each player
+Percent_Diff <- joined_norm %>%
+  group_by(Player) %>%
+  summarize(
+    "Percent Difference Points (%)" = ((abs(Playoffs_PTS-Regular_PTS))/((Playoffs_PTS+Regular_PTS)/2))*100,
+    "Percent Difference Assists (%)" = ((abs(Playoffs_AST-Regular_AST))/((Playoffs_AST+Regular_AST)/2))*100,
+    "Percent Difference Rebounds (%)" = ((abs(Playoffs_TRB-Regular_TRB))/((Playoffs_TRB+Regular_TRB)/2))*100,
+    "Percent Difference Steals (%)" = ((abs(Playoffs_STL-Regular_STL))/((Playoffs_STL+Regular_STL)/2))*100) %>%
+  mutate_if(is.double, round, digits = 2) 
+Percent_Diff$Position <- joined_subset$Position
 ```
 
-
-# Background/Questions
-**Give background on the inspiration for the dataset and questions (1-2 paragraphs).**
-
-# Exploratory Data Anaylsis
-Pull and Clean Dataset
+### Summary Statistics and Data Descriptives for Question 1 {.tabset}
+#### Question 1 Data Descriptives
 ```{r}
-# Combining playoffs and regular season with .playoffs or .regular as distinctions
-nba <- playoffs %>%
-  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
-nba %>%
+summary(joined_norm)
+```
+#### Percent Difference in Playoffs vs Regular Season by Player
+```{r}
+Percent_Diff_by_Players <- Percent_Diff %>%
+  select(Player, `Percent Difference Points (%)`,`Percent Difference Assists (%)`, `Percent Difference Rebounds (%)`, `Percent Difference Steals (%)`)
+Percent_Diff_by_Players %>%
   kbl() %>%
   kable_styling("hover") %>%
   scroll_box(width = "800px", height = "200px")
 ```
-
-Which players perform better or worse in the playoffs than the regular seasons in terms of PPG?
+#### Percent Difference in Playoffs vs Regular Season by Position
 ```{r}
-# Select Players who average >=20 PPG in the playsoffs and regular season to cut down the entries
-points <- nba %>% 
-  select(Player, PTS.regular, PTS.playoffs) %>%
-  filter(PTS.regular >= 20, PTS.playoffs >=20) %>%
-  group_by(Player) %>%
-  # If a player has multiple entries due to being traded, combine through finding the mean for the PPG columns
-  summarize(PTS.regular = mean(PTS.regular), PTS.playoffs = mean(PTS.playoffs))
-
-ggplot(points, aes(x = Player, y= PTS.playoffs)) + 
-  # Red = playoffs
-  geom_point(color = "red") + 
-  # Blue = regular season
-  geom_point(aes(y = PTS.regular), color = "steelblue") + 
-  # Add labels
-  labs(title = "Player and PPG in the Regular Season (Blue) and Playsoff Season (Red)",
-       x = "Player", y = "PPG >=20") + theme_minimal() + 
-  # Rotate Player Names by 90 degrees
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+Percent_Diff_by_Position <- Percent_Diff %>%
+  group_by(Position) %>%
+  summarize(
+    "Mean Percent Difference Points (%)" = mean(`Percent Difference Points (%)`),
+    "Mean Percent Difference Assists (%)" = mean(`Percent Difference Assists (%)`),
+    "Mean Percent Difference Rebounds (%)" = mean(`Percent Difference Rebounds (%)`),
+    "Mean Percent Difference Steals (%)" = mean(`Percent Difference Steals (%)`)) %>%
+  mutate_if(is.double, round, digits = 2)
+  
+Percent_Diff_by_Position %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
 ```
+### {-}
 
-#### Data Descriptives
-|Abbreviation|Meaning|
-|------------|-------|
-|Rk|Rank|
-|Player|Player's Name|
-|Pos|Position|
-|Age|Player's age|
-|Tm|Team|
-|G|Games played|
-|GS|Games started|
-|MP|Minutes played per game|
-|FT|Free throws per game|
-|TRB|Total rebounds per game|
-|ASR|Assists per game|
-|STL|Steals per game|
-|BLK|Blocks per game|
-|TOV|Turnovers per game|
-|PF|Personal fouls per game|
-|PTS|Points per game|
 
+Question 2 uses raw data as it only compares two variables at a time. Because of this, tidying was not necessary.
+
+### Summary Statistics and Data Descriptives for Question 2 {.tabset}
+#### Data Descriptives for Question 2
+```{r}
+regular_subset <- regular %>%
+  select(Player, Pos, G, MP) %>%
+  rename(Position = Pos)
+summary(regular_subset)
+```
+#### Data Descriptives for all variables of regular season
+```{r}
+summary(regular)
+```
+#### Summary Statistics
+```{r}
+regular_subset <- regular %>%
+  select(Player, Pos, G, MP) %>%
+  rename(Position = Pos) %>%
+  group_by(Position) %>%
+  summarize("Average Time Played Per Game" = mean(MP),
+         "Average Games Played" = mean(G))
+
+regular_subset %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+### {-}
 
 # Question 1 Plot & Narrative
 ### Question
@@ -199,76 +308,7 @@ ggplot(nba_pivot, aes(Player, regular, color = "Regular")) +
 ```          
 
 ### Narrative
-**Write 1-2 paragraphs giving your analysis and take on the graph. How does it answer your question? What conclusions can you draw? What does this mean for your reader/stakeholder?**
-
-### Summary Statistics {.tabset}
-
-Normalize statistics to minutes played
-```{r}
-joined_norm <- joined_subset %>%
-  mutate(
-    Playoffs_PTS = Playoffs_PTS/Playoff_Mins_Played, 
-    Playoffs_AST = Playoffs_AST/Playoff_Mins_Played, 
-    Playoffs_TRB = Playoffs_TRB/Playoff_Mins_Played, 
-    Playoffs_STL = Playoffs_STL/Playoff_Mins_Played,
-    Regular_PTS = Regular_PTS/Regular_Mins_Played, 
-    Regular_AST = Regular_AST/Regular_Mins_Played, 
-    Regular_TRB = Regular_TRB/Regular_Mins_Played, 
-    Regular_STL = Regular_STL/Regular_Mins_Played) %>%
-  select(Player, Position,
-         Playoffs_PTS, Regular_PTS,
-         Playoffs_AST, Regular_AST,
-         Playoffs_TRB, Regular_TRB,
-         Playoffs_STL, Regular_STL)
-```
-
-Take percent difference between playoff and regular performance for each player
-```{r}
-Percent_Diff <- joined_norm %>%
-  group_by(Player) %>%
-  summarize(
-    "Percent Difference Points (%)" = ((abs(Playoffs_PTS-Regular_PTS))/((Playoffs_PTS+Regular_PTS)/2))*100,
-    "Percent Difference Assists (%)" = ((abs(Playoffs_AST-Regular_AST))/((Playoffs_AST+Regular_AST)/2))*100,
-    "Percent Difference Rebounds (%)" = ((abs(Playoffs_TRB-Regular_TRB))/((Playoffs_TRB+Regular_TRB)/2))*100,
-    "Percent Difference Steals (%)" = ((abs(Playoffs_STL-Regular_STL))/((Playoffs_STL+Regular_STL)/2))*100) %>%
-  mutate_if(is.double, round, digits = 2) #source: https://universeofdatascience.com/how-to-round-data-frame-containing-character-variables-in-r/#more-913
-Percent_Diff$Position <- joined_subset$Position
-```
-
-#### Percent Difference by Player
-```{r}
-Percent_Diff_by_Players <- Percent_Diff %>%
-  select(Player, `Percent Difference Points (%)`,`Percent Difference Assists (%)`, `Percent Difference Rebounds (%)`, `Percent Difference Steals (%)`)
-Percent_Diff_by_Players %>%
-  kbl() %>%
-  kable_styling("hover") %>%
-  scroll_box(width = "800px", height = "200px")
-```
-
-#### Percent Difference by Position
-```{r}
-Percent_Diff_by_Position <- Percent_Diff %>%
-  group_by(Position) %>%
-  summarize(
-    "Mean Percent Difference Points (%)" = mean(`Percent Difference Points (%)`),
-    "Mean Percent Difference Assists (%)" = mean(`Percent Difference Assists (%)`),
-    "Mean Percent Difference Rebounds (%)" = mean(`Percent Difference Rebounds (%)`),
-    "Mean Percent Difference Steals (%)" = mean(`Percent Difference Steals (%)`)) %>%
-  mutate_if(is.double, round, digits = 2)
-  
-Percent_Diff_by_Position %>%
-  kbl() %>%
-  kable_styling("hover") %>%
-  scroll_box(width = "800px", height = "200px")
-```
-
-#### General Summary of Stats Normalized to Minutes Played {.tabset}
-```{r}
-summary(joined_norm)%>%
-  kbl() %>%
-  kable_styling("hover") %>%
-  scroll_box(width = "800px", height = "200px")
-```
+Despite the few outliers most players performed close to their regular season averages in the playoffs. Although most of the averages went down from the regular season to the playoffs. This could contribute to the fact that the level of play increases in the playoffs, especially defensively, as the playoffs are what truly matters when it comes to winning. If the NBA wants all players to play at their peak level throughout the season and not just the playoffs then they might want to think about reducing the amount of games during the regular season. This graph is mainly directed towards NBA analysts and NBA coaches. A lot of analysts discuss who will show up in the playoffs and if they will fail to perform under the pressure. These graphs could provide good insight on who might over perform or under perform when it comes to the playoffs. This graph may also provide good information to coaches when considering who to trade for or sign later in the season if they want a better chance at winning the NBA finals. 
 
 
 # Question 2 Plot & Narrative
@@ -276,12 +316,8 @@ summary(joined_norm)%>%
 > What positions are the most durable (played for the longest and for the most games) in a regular season?
 
 ### Plot
-Box plot of games played for each position (Regular season)
+#### Box plot of games played for each position (Regular season)
 ```{r}
-regular_b1<-regular %>%
-  select(Pos, G) %>%
-  rename(Position = Pos, Games_Played = G)
-
 #boxplot
 ggplot(regular_b1, 
        aes( x = Position, 
@@ -305,12 +341,8 @@ ggplot(regular_b1,
   theme_minimal()
 ```
 
-Box plot of minutes played for each position (Regular season)
+#### Box plot of minutes played for each position (Regular season)
 ```{r}
-regular_b2<-regular %>%
-  select(Pos, MP) %>%
-  rename(Position = Pos, Minutes_Played_Per_Game = MP)
-
 #boxplot
 ggplot(regular_b2, 
        aes( x = Position, 
@@ -332,26 +364,20 @@ ggplot(regular_b2,
   xlab('Position') +
   ylab('Minutes Played per Game') +
   theme_minimal()
-
-
 ```
+
 
 ### Narrative
-**Write 1-2 paragraphs giving your analysis and take on the graph. How does it answer your question? What conclusions can you draw? What does this mean for your reader/stakeholder?**
+We thought that it would be good to see what positions played the most games per season to test durability. While this was a good graph we also were curious about the minutes played per game, due to the fact that someone may play a lot of games despite playing few minutes per game. These two box plots did present interesting data as Shooting Guard-Point Guard position was a position that played a lot of games per season on average compared to many others, but despite that the median amount of minutes played per game was much closer to other positions medians. This data could have big implications on the stakeholders (the NBA coaches). These graphs can tell the coaches that although some positions could be the most important part of a team, a team may also want the most substitutions for those respective positions as they are the least durable/can handle less play time throughout a single game.
 
-### Summary Statistics
-```{r}
-regular_subset <- regular %>%
-  select(Player, Pos, G, MP) %>%
-  rename(Position = Pos) %>%
-  group_by(Position) %>%
-  summarize("Average Time Played Per Game" = mean(MP),
-         "Average Games Played" = mean(G))
+# Summary
+**insert summary paragraphs**
 
-regular_subset %>%
-  kbl() %>%
-  kable_styling("hover") %>%
-  scroll_box(width = "800px", height = "200px")
-```
+# Citations
 
-## Summary
+**Source for mutate_if function used in summary statistics:**
+Team, D. S. T. (2021, September 13). How to Round Data Frame Containing Character Variables in R. Universe of Data Science. Retrieved March 16, 2023, from https://universeofdatascience.com/how-to-round-data-frame-containing-character-variables-in-r/#more-913 
+
+**Source for ending tabset:**
+Christophe Dervieux, Yihui Xie, & Emily Riederer. (2022, November 7). R Markdown Cookbook. 7.6 Put content in tabs. Retrieved March 16, 2023, from https://bookdown.org/yihui/rmarkdown-cookbook/html-tabs.html 
+
