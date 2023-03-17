@@ -99,10 +99,7 @@ nba_filtered <- nba %>%
     APG_regular >= 7 | APG_playoffs >= 5.9
   )
 # Manually fix players who have accents in their name
-nba_filtered$Player[22] <- "Jonas Valanciunas"
-nba_filtered$Player[28] <- "Luka Doncic"
-nba_filtered$Player[29] <- "Nikola Jokic"
-nba_filtered$Player[30] <- "Nikola Vucevic"
+
 # tidy format that can be plotted with ggplot
 nba_tidy <- nba_filtered %>%
   select(Player, PPG_regular, RPG_regular, APG_regular, PPG_playoffs, RPG_playoffs, APG_playoffs) %>%
