@@ -94,9 +94,9 @@ nba_filtered <- nba %>%
     APG_playoffs = round(mean(AST.playoffs, na.rm = TRUE), 2)
   ) %>%
   filter(
-    PPG_regular >= 20 | PPG_playoffs >= 20 |
-    RPG_regular >= 10 | RPG_playoffs >= 10 |
-    APG_regular >= 10 | APG_playoffs >= 10
+    PPG_regular >= 24.6 | PPG_playoffs >= 22.8 |
+    RPG_regular >= 10.1 | RPG_playoffs >= 7.6 |
+    APG_regular >= 7 | APG_playoffs >= 5.9
   )
 # Manually fix players who have accents in their name
 nba_filtered$Player[22] <- "Jonas Valanciunas"
