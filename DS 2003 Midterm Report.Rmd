@@ -64,7 +64,7 @@ regular %>%
 <br>
 <br>
 
-#### Pertinent Data Dictionary
+#### Pertinent Data Dictionary for Original Data Set
 |Abbreviation|Definition|
 |------------|-------|
 |Rk|Rank|
@@ -76,13 +76,16 @@ regular %>%
 |GS|Games started|
 |MP|Minutes played per game|
 |FT|Free throws per game|
-|TRB|Total rebounds per game|
-|ASR|Assists per game|
+|TRB|Total rebounds per game original dataset|
+|ASR|Assists per game original dataset|
 |STL|Steals per game|
 |BLK|Blocks per game|
 |TOV|Turnovers per game|
 |PF|Personal fouls per game|
-|PTS|Points per game|
+|PTS|Points per game in original dataset|
+|PPG|Points per game (renamed for clarity)|
+|RPG|Rebounds per game (renamed for clarity)|
+|APG|Assists per game (renamed for clarity)|
 
 <br>
 <br>
@@ -106,7 +109,7 @@ nba <- playoffs %>%
   left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
 # filter to only include nba players who average more than:
 # top15th leader in ppg in the regular or playoff or
-# top15th leader in rpg in the regular or playoff or
+# top15th leader in pg in the regular or playoff or
 # top15th leader in apg in the regular or playoff
 nba_filtered <- nba %>%
   group_by(Player) %>%
@@ -329,11 +332,16 @@ regular_subset %>%
 ```{r}
 # plot facet-wrapped graph
 ggplot(nba_pivot, aes(Player, regular, color = "Regular")) +
-  geom_point() +
-  geom_point(aes(Player, playoffs, color = "Playoff")) +
+  geom_point(aes(shape = Stat)) +
+  geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat)) +
   facet_grid(Stat ~ ., scales = "free_y") +
-  scale_color_manual(name = "Season", values = c("Regular" = "steelblue", "Playoff" = "red")) +
-  labs(title = "Regular Season vs Playoff Season Averages") +
+  scale_shape_manual(name = "Averages", values = c("PPG" = 19, "APG" = 17, "RPG" = 15)) +
+  scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+  labs(title = "Regular Season vs Playoff Season Averages", caption = 
+  "Kaggle, 2021-2022 NBA Player Stats
+  PPG = Points Per Game
+  RPG = Rebounds Per Game
+  APG = Assist Per Game") +
   labs(x = "", y ="") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
@@ -361,7 +369,7 @@ ggplot(regular_b1,
        aes( x = Position, 
             y = Games_Played,
             )) +
-  geom_boxplot(color='#0B1D51', fill='steelblue', alpha=0.5) +
+  geom_boxplot(color='#0B1D51', fill='#2E6039', alpha=0.5) +
     labs(
     title = 'Games Played Based on Position',
     caption = 'Kaggle, 2021-2022 NBA Player Stats
@@ -389,7 +397,7 @@ ggplot(regular_b2,
        aes( x = Position, 
             y = Minutes_Played_Per_Game,
             )) +
-  geom_boxplot(color='#0B1D51', fill='steelblue', alpha=0.5) +
+  geom_boxplot(color='#0B1D51', fill='#4EBCB6', alpha=0.5) +
     labs(
     title = 'Minutes Played Per Game Based on Position',
     caption = 'Kaggle, 2021-2022 NBA Player Stats
@@ -412,7 +420,7 @@ ggplot(regular_b2,
 We thought that it would be good to see what positions played the most games per season to test durability. While this was a good graph we also were curious about the minutes played per game, due to the fact that someone may play a lot of games despite playing few minutes per game. These two box plots did present interesting data as Shooting Guard-Point Guard position was a position that played a lot of games per season on average compared to many others, but despite that the median amount of minutes played per game was much closer to other positions medians. This data could have big implications on the stakeholders (the NBA coaches). These graphs can tell the coaches that although some positions could be the most important part of a team, a team may also want the most substitutions for those respective positions as they are the least durable/can handle less play time throughout a single game.
 
 # Summary
-**insert summary paragraphs**
+Overall, our graphs do provide information about player performance from the playoffs and regular season and inform stakeholders about discrepancies between games played and play time for the various positions. Upon viewing the facet-wrapped scatter plot graph, we see that generally players in general perform around or just slightly below their averages from the regular season onto the playoff season. Since these values are so close, the graph would likely support a claim that individual player performance does not change much between the playoffs and regular season. From our boxplots, we can see how the median and interquartiles for games played and minutes played per game change between positions. This graphical representation can help coaches determine which positions are really vital, in that they play many games and for long periods; where people get the most exhausted and may need substitutes; and give insight into which positions have players in for different amounts of time than the number of games played would suggest. This is important to the game because all of these insights could be useful for strategizing.
 
 # Citations
 
