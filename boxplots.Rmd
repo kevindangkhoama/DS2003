@@ -56,7 +56,8 @@ server <- function(input, output) {
   output$boxplot <- renderPlotly({
     plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box',
             fillcolor='#2E603980', line=list(color='#0B1D5180'),
-            boxpoints = 'all', jitter = 0.3) %>%
+            boxpoints = 'all', jitter = 0.3,
+            marker=list(color='#2E603980')) %>%
       layout(title = 'Games Played Based on Position',
              xaxis = list(title = 'Position'),
              yaxis = list(title = 'Games Played'))
@@ -74,7 +75,8 @@ server <- function(input, output) {
       output$boxplot <- renderPlotly({
         plot_ly(filtered_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
                 fillcolor='#2E603980', line=list(color='#0B1D5180'),
-                boxpoints = 'all', jitter = 0.3) %>%
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#2E603980')) %>%
           layout(title = 'Games Played Based on Position',
                  xaxis = list(title = 'Position'),
                  yaxis = list(title = 'Games Played'))
@@ -84,7 +86,8 @@ server <- function(input, output) {
       output$boxplot <- renderPlotly({
         plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
                 fillcolor='#2E603980', line=list(color='#0B1D5180'),
-                boxpoints = 'all', jitter = 0.3) %>%
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#2E603980')) %>%
           layout(title = 'Games Played Based on Position',
                  xaxis = list(title = 'Position'),
                  yaxis = list(title = 'Games Played'))
@@ -113,7 +116,8 @@ server <- function(input, output) {
   output$boxplot <- renderPlotly({
     plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box',
             fillcolor='#4EBCB680', line =list(color='#0B1D5180'),
-            boxpoints = 'all', jitter = 0.3) %>%
+            boxpoints = 'all', jitter = 0.3,
+            marker=list(color='#4EBCB680')) %>%
       layout(title = 'Minutes Played Per Game Based on Position',
              xaxis = list(title = 'Position'),
              yaxis = list(title = 'Minutes Played per Game'))
@@ -130,7 +134,8 @@ server <- function(input, output) {
       # Update plot
       output$boxplot <- renderPlotly({
         plot_ly(filtered_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box', fillcolor ='#4EBCB680', line =list(color='#0B1D5180'), boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
-                boxpoints = 'all', jitter = 0.3) %>%
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#4EBCB680')) %>%
           layout(title = 'Minutes Played Per Game Based on Position',
                  xaxis = list(title = 'Position'),
                  yaxis = list(title = 'Minutes Played per Game'))
@@ -139,7 +144,8 @@ server <- function(input, output) {
       # Reset plot to initial state
       output$boxplot <- renderPlotly({
         plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box', fillcolor='#4EBCB680', line=list(color='#0B1D5180'), boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
-                boxpoints = 'all', jitter = 0.3) %>%
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#4EBCB680')) %>%
           layout(title = 'Minutes Played Per Game Based on Position',
                  xaxis = list(title = 'Position'),
                  yaxis = list(title = 'Minutes Played per Game'))
