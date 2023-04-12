@@ -1,0 +1,153 @@
+---
+title: "boxplots"
+author: "Kevin Ma"
+date: "3-30-2023"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: cosmo
+    code_folding: hide
+---
+
+## Note: I tried setting the outline in the code to the correct color and could not figure out why it was not applying but the fill would apply correctly. I intend to go to OH to fix this if my group ends up using these boxplots.
+
+# Report Dependencies and Setup Data
+```{r message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(skimr)
+library(pollster)
+library(kableExtra)
+library(plotly)
+library(shiny)
+
+playoffs <- read.csv('2021-2022 NBA Player Stats - Playoffs.csv')
+regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+
+# Box plot 1 shows the amount of games each position plays
+regular_b1<-regular %>%
+  select(Pos, G) %>% # we only need these two columns
+  rename(Position = Pos, Games_Played = G)
+
+# Box plot 2 shows the minutes played per game by each position
+regular_b2<-regular %>%
+  select(Pos, MP) %>% # we only need these two columns
+  rename(Position = Pos, Minutes_Played_Per_Game = MP)
+
+```
+
+
+```{r}
+# Define UI
+ui <- fluidPage(
+  plotlyOutput("boxplot"),
+  checkboxInput("outliers", "Toggle Boxpoints"),
+  checkboxInput("boxmean", "Toggle Mean/SD", FALSE),
+  checkboxInput("filter", "Filter Boxplots with < 5 Points")
+)
+
+# Define server
+server <- function(input, output) {
+  
+  # Create initial plot
+  output$boxplot <- renderPlotly({
+    plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box',
+            fillcolor='#2E603980', line=list(color='#0B1D5180'),
+            boxpoints = 'all', jitter = 0.3) %>%
+      layout(title = 'Games Played Based on Position',
+             xaxis = list(title = 'Position'),
+             yaxis = list(title = 'Games Played'))
+  })
+  
+  # Update plot based on checkbox input
+  observeEvent(input$filter, {
+    if (input$filter) {
+      # Filter out boxplots with < 5 points
+      filtered_b1 <- regular_b1 %>%
+        group_by(Position) %>%
+        filter(n() > 5)
+      
+      # Update plot
+      output$boxplot <- renderPlotly({
+        plot_ly(filtered_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                fillcolor='#2E603980', line=list(color='#0B1D5180'),
+                boxpoints = 'all', jitter = 0.3) %>%
+          layout(title = 'Games Played Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Games Played'))
+      })
+    } else {
+      # Reset plot to initial state
+      output$boxplot <- renderPlotly({
+        plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                fillcolor='#2E603980', line=list(color='#0B1D5180'),
+                boxpoints = 'all', jitter = 0.3) %>%
+          layout(title = 'Games Played Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Games Played'))
+      })
+    }
+  })
+}
+
+# Run the app
+shinyApp(ui, server)
+```
+
+```{r}
+# Define UI
+ui <- fluidPage(
+  plotlyOutput("boxplot"),
+  checkboxInput("outliers", "Toggle Boxpoints"),
+  checkboxInput("boxmean", "Toggle Mean/SD", FALSE),
+  checkboxInput("filter", "Filter Boxplots with < 5 Points")
+)
+
+# Define server
+server <- function(input, output) {
+  
+  # Create initial plot
+  output$boxplot <- renderPlotly({
+    plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box',
+            fillcolor='#4EBCB680', line =list(color='#0B1D5180'),
+            boxpoints = 'all', jitter = 0.3) %>%
+      layout(title = 'Minutes Played Per Game Based on Position',
+             xaxis = list(title = 'Position'),
+             yaxis = list(title = 'Minutes Played per Game'))
+  })
+  
+  # Update plot based on checkbox input
+  observeEvent(input$filter, {
+    if (input$filter) {
+      # Filter out boxplots with < 5 points
+      filtered_b2 <- regular_b2 %>%
+        group_by(Position) %>%
+        filter(n() > 5)
+      
+      # Update plot
+      output$boxplot <- renderPlotly({
+        plot_ly(filtered_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box', fillcolor ='#4EBCB680', line =list(color='#0B1D5180'), boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                boxpoints = 'all', jitter = 0.3) %>%
+          layout(title = 'Minutes Played Per Game Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Minutes Played per Game'))
+      })
+    } else {
+      # Reset plot to initial state
+      output$boxplot <- renderPlotly({
+        plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box', fillcolor='#4EBCB680', line=list(color='#0B1D5180'), boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                boxpoints = 'all', jitter = 0.3) %>%
+          layout(title = 'Minutes Played Per Game Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Minutes Played per Game'))
+      })
+    }
+  })
+}
+
+# Run the app
+shinyApp(ui, server)
+```
