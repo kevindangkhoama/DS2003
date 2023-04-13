@@ -1,0 +1,21 @@
+---
+title: "Home"
+output:
+  html_document:
+    theme: cosmo
+---
+
+### Executive Summary
+This report utilizes NBA data to create clear and informative plots that demonstrate differences in NBA seasons and positions. This report is geared towards readers looking to understand more about how different players perform in the playoffs versus during the regular season and which positions in the NBA let players have the most playtime. Stakeholders interested in this may be recruiters, coaches, or fantasy league players.
+
+Our key findings were that though average performance between player performance in the playoffs and regular season were close, players tended to play slightly worse in the regular season than in the playoffs. There are many reasons for this, including the playoffs being very high stakes as they determine the NBA title and that there are fewer games in the playoffs than in the regular season. We also found that some  positions with players who played the most games did not have the most playing time per game. We found this interesting and thought it may be valuable information for coaches to know as they plan substitutes and strategy.
+
+### Background
+As a group, we found that we all had a common interest in basketball, especially with March Madness approaching. Additionally, it is simple to find stats tracking the performance of players in sports. Knowing this, we explored some datasets on Kaggle and found an interesting one that included NBA stats on playoffs and regular seasons from 2021-2022.
+
+We thought it would be interesting to see how a player’s performance differs between the playoffs and regular seasons. The regular season is obviously a major part of getting into the playoffs, but we felt it was important to see how players stepped up to the pressure of being in the playoffs and winning when it mattered. This led to us wonder if there was a difference between a player’s position and how long they can remain in the league. For example, players who play a guard position are oftentimes shorter than someone who plays a position like a center. In general, those who are taller seem to be less durable and we wanted to see if this applied in the NBA.
+
+### Questions
+##### 1) How does NBA success translate from playoffs to the regular season in terms of PPG, RPG, AND APG?
+
+##### 2) What positions are the most durable (played for the longest and for the most games) in a regular season?

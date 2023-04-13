@@ -1,0 +1,12 @@
+---
+title: "Citations"
+output:
+  html_document:
+    theme: cosmo
+---
+
+**Source for mutate_if function used in summary statistics:**
+Team, D. S. T. (2021, September 13). How to Round Data Frame Containing Character Variables in R. Universe of Data Science. Retrieved March 16, 2023, from https://universeofdatascience.com/how-to-round-data-frame-containing-character-variables-in-r/#more-913 
+
+**Source for ending tabset:**
+Christophe Dervieux, Yihui Xie, & Emily Riederer. (2022, November 7). R Markdown Cookbook. 7.6 Put content in tabs. Retrieved March 16, 2023, from https://bookdown.org/yihui/rmarkdown-cookbook/html-tabs.html 
