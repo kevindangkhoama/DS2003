@@ -102,13 +102,12 @@ nba_pivot_for_age <- merge(nba_pivot, age, by = "Player")
 shinyApp(
   
   ui = fluidPage(
-    sidebarLayout(
-      sidebarPanel(
+    fluidRow(
       selectInput("view", label="Graph:",
               choices = list("PPG, RPG, APG by Player"=1, "Points Per Game by Player"=2, "Rebounds Per Game by Player"=3, "Assists Per Game by Player"=4),
               selected = 1),
       sliderInput("agerange", label = "Age Range:",
-              min = 18, max = 42, value = 42, step = 1) 
+              min = 18, max = 42, value = c(18,42), step = 1) 
       ),
     mainPanel(
       conditionalPanel(
@@ -128,14 +127,14 @@ shinyApp(
         plotOutput('apg')
       )
         ),
-  )),
+  ),
   
 
   server = function(input, output){
       
       output$ppg <- renderPlot({
         nba_pivot_for_age %>%
-          filter(Age <= input$agerange) %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
           ggplot(aes(Player, regular, color = "Regular")) +
           geom_point(aes(shape = Stat), size =3) +
           geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
@@ -150,7 +149,7 @@ shinyApp(
 
       output$rpg <- renderPlot({
         nba_pivot_for_age %>%
-          filter(Age <= input$agerange) %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
           ggplot(aes(Player, regular, color = "Regular")) +
           geom_point(aes(shape = Stat), size =3) +
           geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
@@ -166,7 +165,7 @@ shinyApp(
       
       output$apg <- renderPlot({
         nba_pivot_for_age %>%
-          filter(Age <= input$agerange) %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
           ggplot(aes(Player, regular, color = "Regular")) +
           geom_point(aes(shape = Stat), size = 3) +
           geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
@@ -182,7 +181,7 @@ shinyApp(
 
       output$allplots <- renderPlot({
         nba_pivot_for_age %>%
-          filter(Age <= input$agerange) %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
           ggplot(aes(Player, regular, color = "Regular")) +
           geom_point(aes(shape = Stat), size = 3) +
           geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
