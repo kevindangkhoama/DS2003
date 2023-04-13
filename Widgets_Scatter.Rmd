@@ -101,15 +101,16 @@ nba_pivot_for_age <- merge(nba_pivot, age, by = "Player")
 ```{r}
 shinyApp(
   
-  ui = fluidPage(
+  ui = fluidPage(column(width=12,
+    wellPanel(
     fluidRow(
-      selectInput("view", label="Graph:",
+      column(width=6, selectInput("view", label="Graph:",
               choices = list("PPG, RPG, APG by Player"=1, "Points Per Game by Player"=2, "Rebounds Per Game by Player"=3, "Assists Per Game by Player"=4),
-              selected = 1),
-      sliderInput("agerange", label = "Age Range:",
-              min = 18, max = 42, value = c(18,42), step = 1) 
-      ),
-    mainPanel(
+              selected = 1)),
+      column(width=6, sliderInput("agerange", label = "Age Range:",
+              min = 18, max = 42, value = c(18,42), step = 1)) 
+      ))),
+    mainPanel(width = 12,
       conditionalPanel(
         condition = "input.view == 1",
         plotOutput('allplots')
