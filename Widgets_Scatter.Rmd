@@ -1,0 +1,202 @@
+---
+title: "Final Project Scatterplot Widget - Shiny"
+name: "Eva Massarelli"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+runtime: shiny    
+---
+## Dependencies and Data
+
+Dependencies
+```{r, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(reshape2)
+library(skimr)
+library(pollster)
+library(kableExtra)
+```
+
+Data
+```{r}
+# Import Data Set Regular Season
+regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+regular %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+
+```{r}
+# Import Data Set Playoffs Season
+playoffs <- read.csv('2021-2022 NBA Player Stats - Playoffs.csv')
+playoffs %>%
+  kbl() %>%
+  kable_styling("hover") %>%
+  scroll_box(width = "800px", height = "200px")
+```
+
+Reorganized dataframes
+```{r warning=FALSE}
+# Combine playoffs and regular season with .playoffs or .regular as distinctions
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+# filter to only include nba players who average more than:
+# top15th leader in ppg in the regular or playoff or
+# top15th leader in pg in the regular or playoff or
+# top15th leader in apg in the regular or playoff
+
+nba_filtered <- nba %>%
+  group_by(Player) %>%
+  summarize(
+    PPG_regular = round(mean(PTS.regular, na.rm = TRUE), 2),
+    RPG_regular = round(mean(TRB.regular, na.rm = TRUE), 2),
+    APG_regular = round(mean(AST.regular, na.rm = TRUE), 2),
+    PPG_playoffs = round(mean(PTS.playoffs, na.rm = TRUE), 2),
+    RPG_playoffs = round(mean(TRB.playoffs, na.rm = TRUE), 2),
+    APG_playoffs = round(mean(AST.playoffs, na.rm = TRUE), 2)
+  ) %>%
+  filter(
+    PPG_regular >= 24.6 | PPG_playoffs >= 22.8 |
+    RPG_regular >= 10.1 | RPG_playoffs >= 7.6 |
+    APG_regular >= 7 | APG_playoffs >= 5.9
+  )
+# Manually fix players who have accents in their name
+nba_filtered$Player[22] <- "Jonas Valanciunas"
+nba_filtered$Player[30] <- "Luka Doncic"
+nba_filtered$Player[32] <- "Nikola Jokic"
+nba_filtered$Player[33] <- "Nikola Vucevic"
+
+# tidy format that can be plotted with ggplot
+nba_tidy <- nba_filtered %>%
+  select(Player, PPG_regular, RPG_regular, APG_regular, PPG_playoffs, RPG_playoffs, APG_playoffs) %>%
+  gather(key, value, -Player) %>%
+  separate(key, into = c("Attribute", "Season"), sep = "_") %>%
+  spread(Season, value)
+
+# pivot the data to a wide format that can be used with geom_point()
+nba_pivot<- nba_tidy %>%
+  pivot_longer(cols = c("regular", "playoffs"), names_to = "Season", values_to = "amount") %>%
+  separate(Attribute, into = c("Stat", "Type"), sep = "_") %>%
+  pivot_wider(names_from = Season, values_from = amount)
+# set the levels in desired order
+nba_pivot$Stat <- factor(nba_pivot$Stat, levels = c("PPG", "RPG", "APG"))
+
+
+age <- nba %>%
+  select(Player, Age.regular) %>%
+  distinct(Player, .keep_all = TRUE) %>%
+  rename(Age = Age.regular)
+
+nba_pivot_for_age <- merge(nba_pivot, age, by = "Player")
+```
+
+
+```{r}
+shinyApp(
+  
+  ui = fluidPage(
+    sidebarLayout(
+      sidebarPanel(
+      selectInput("view", label="Graph:",
+              choices = list("PPG, RPG, APG by Player"=1, "Points Per Game by Player"=2, "Rebounds Per Game by Player"=3, "Assists Per Game by Player"=4),
+              selected = 1),
+      sliderInput("agerange", label = "Age Range:",
+              min = 18, max = 42, value = 42, step = 1) 
+      ),
+    mainPanel(
+      conditionalPanel(
+        condition = "input.view == 1",
+        plotOutput('allplots')
+      ),
+      conditionalPanel(
+        condition = "input.view == 2",
+        plotOutput('ppg')
+      ),
+      conditionalPanel(
+        condition = "input.view == 3",
+        plotOutput('rpg')
+      ),
+      conditionalPanel(
+        condition = "input.view == 4",
+        plotOutput('apg')
+      )
+        ),
+  )),
+  
+
+  server = function(input, output){
+      
+      output$ppg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age <= input$agerange) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size =3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+          scale_shape_manual(name = "Averages", values = c("PPG" = 19)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average PPG", caption = 
+          "Kaggle, 2021-2022 NBA Player Stats") +
+          labs(x = "Player", y ="Points Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        })
+
+      output$rpg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age <= input$agerange) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size =3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+            ylim(0,20)+
+          scale_shape_manual(name = "Averages", values = c("RPG" = 15)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average RPG", caption = 
+          "Kaggle, 2021-2022 NBA Player Stats") +
+          labs(x = "Player", y ="Rebounds Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        })
+      
+      output$apg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age <= input$agerange) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size = 3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+            ylim(0,15)+
+          scale_shape_manual(name = "Averages", values = c("APG" = 17)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average APG", caption = 
+          "Kaggle, 2021-2022 NBA Player Stats") +
+          labs(x = "Player", y ="Assists Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        })      
+
+      output$allplots <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age <= input$agerange) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size = 3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+          facet_grid(Stat ~ ., scales = "free_y") +
+          scale_shape_manual(name = "Averages", values = c("PPG" = 19, "APG" = 17, "RPG" = 15)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Averages", caption = 
+          "Kaggle, 2021-2022 NBA Player Stats") +
+          labs(x = "Player", y ="") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        })
+  },
+  
+  options = list(height = 600)
+  )
+```
