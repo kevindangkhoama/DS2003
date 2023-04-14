@@ -1,0 +1,27 @@
+---
+title: "Data2"
+output:
+  html_document:
+    theme: cosmo
+---
+### Data transformations used to create Facet-Wrapped Scatterplot
+
+Manipulations performed:
+
+* Combined the playoffs and regular season data with .playoffs or .regular as distinctions
+* Filtered to include 15th highest average in either the playoffs or regular season
+* Fixed names of players who have accents
+* Manipulated data dictionary to be in tidy format to be used for ggplot
+* Pivot the data to a wide format that can be used with geom_point()
+* Set levels in the desired order
+
+### Data transformations used to create Box plots
+
+Manipulations Performed:
+
+* Used regular season dataset as it has more games and includes the whole NBA
+* Selected Pos and G for boxplot1
+* Selected Pos and MP for boxplot2
+* Renamed Pos to Position for both boxplots
+* Renamed G to Games for boxplot1
+* Renamed MP to Minutes Played for boxplot2

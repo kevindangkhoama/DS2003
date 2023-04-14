@@ -1,0 +1,16 @@
+---
+title: "Summary"
+output:
+  html_document:
+    theme: cosmo
+---
+
+### Narrative for Question 1
+Despite the few outliers, most players performed close to their regular season averages in the playoffs. Although, many averages went down from the regular season to the playoffs. This could be due to the fact that the level of play increases in the playoffs, especially defensively, as the playoffs are what truly matters when it comes to winning. If the NBA wants all players to play at their peak level throughout the season and not just in the playoffs, they might want to consider reducing the number of games during the regular season. This graph directed toward NBA analysts and NBA coaches. Many analysts discuss who will be in the playoffs and if they will fail to perform under pressure. These graphs could provide good insight into who might over-perform or under-perform in the playoffs. This graph may also provide good information to coaches when considering who to trade for or sign later in the season if they want a better chance at winning the NBA finals.
+
+### Narrative for Quesiton 2
+We thought that it would be good to see what positions played the most games per season to test durability. While this was a good graph we also were curious about the minutes played per game, due to the fact that someone may play a lot of games despite playing few minutes per game. These two box plots did present interesting data as Shooting Guard-Point Guard position was a position that played a lot of games per season on average compared to many others, but despite the median amount of minutes played per game being much closer to other positions medians. This data could have big implications on the stakeholders (the NBA coaches). These graphs can tell the coaches that although some positions could be the most important part of a team, a team may also want the most substitutions for those respective positions as they are the least durable/can handle less play time throughout a single game. Analysts could pair these plots and the graph that focuses on question one to see how the players listed in the first graph perform given their position's playtime.
+
+### Summary
+Overall, our graphs provide information about player performance from the playoffs and regular season and inform stakeholders about discrepancies between games played and play time for the various positions. Upon viewing the facet-wrapped scatter plot graph, we see that generally players perform around or just slightly below their averages from the regular season onto the playoff season. Since these values are so close, the graph would likely support a claim that individual player performance does not change much between the playoffs and regular season. The boxplots depict how the median and interquartiles for games played and minutes played per game change between positions. This graphical representation can help coaches determine which positions are really vital, in that they play many games and for long periods of time; where people get the most exhausted and may need to be substituted; and give insight into which positions have players in for different amounts of time than the number of games played would suggest. These insights are important to the game because they could be useful for coaches strategizing and for analysts commenting on games.
+

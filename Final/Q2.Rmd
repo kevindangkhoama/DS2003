@@ -5,10 +5,8 @@ output:
     theme: cosmo
 ---
 
-### Question
+### Question 2
 > What positions are the most durable (played for the longest and for the most games) in a regular season?
 
-### Narrative
-We thought that it would be good to see what positions played the most games per season to test durability. While this was a good graph we also were curious about the minutes played per game, due to the fact that someone may play a lot of games despite playing few minutes per game. These two box plots did present interesting data as Shooting Guard-Point Guard position was a position that played a lot of games per season on average compared to many others, but despite the median amount of minutes played per game being much closer to other positions medians. This data could have big implications on the stakeholders (the NBA coaches). These graphs can tell the coaches that although some positions could be the most important part of a team, a team may also want the most substitutions for those respective positions as they are the least durable/can handle less play time throughout a single game. Analysts could pair these plots and the graph that focuses on question one to see how the players listed in the first graph perform given their position's playtime.
 <br>
 <br>
