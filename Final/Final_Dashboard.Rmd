@@ -1,0 +1,501 @@
+---
+output: 
+runtime: shiny   
+---
+
+```{r message=FALSE, echo=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(skimr)
+library(pollster)
+library(kableExtra)
+library(plotly)
+library(shiny)
+library(markdown)
+library(shinyWidgets)
+library(DT)
+```
+
+```{r warning=FALSE, echo=FALSE}
+playoffs <- read.csv('2021-2022 NBA Player Stats - Playoffs.csv')
+regular <- read.csv('2021-2022 NBA Player Stats - Regular.csv')
+
+# Box plot 1 shows the amount of games each position plays
+regular_b1<-regular %>%
+  select(Pos, G) %>% # we only need these two columns
+  rename(Position = Pos, Games_Played = G)
+
+# Box plot 2 shows the minutes played per game by each position
+regular_b2<-regular %>%
+  select(Pos, MP) %>% # we only need these two columns
+  rename(Position = Pos, Minutes_Played_Per_Game = MP)
+
+# Combine playoffs and regular season with .playoffs or .regular as distinctions
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+
+nba <- playoffs %>%
+  left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+# filter to only include nba players who average more than:
+# top15th leader in ppg in the regular or playoff or
+# top15th leader in pg in the regular or playoff or
+# top15th leader in apg in the regular or playoff
+nba_filtered <- nba %>%
+  group_by(Player) %>%
+  summarize(
+    PPG_regular = round(mean(PTS.regular, na.rm = TRUE), 2),
+    RPG_regular = round(mean(TRB.regular, na.rm = TRUE), 2),
+    APG_regular = round(mean(AST.regular, na.rm = TRUE), 2),
+    PPG_playoffs = round(mean(PTS.playoffs, na.rm = TRUE), 2),
+    RPG_playoffs = round(mean(TRB.playoffs, na.rm = TRUE), 2),
+    APG_playoffs = round(mean(AST.playoffs, na.rm = TRUE), 2)
+  ) %>%
+  filter(
+    PPG_regular >= 24.6 | PPG_playoffs >= 22.8 |
+    RPG_regular >= 10.1 | RPG_playoffs >= 7.6 |
+    APG_regular >= 7 | APG_playoffs >= 5.9
+  )
+# Manually fix players who have accents in their name
+nba_filtered$Player[22] <- "Jonas Valanciunas"
+nba_filtered$Player[30] <- "Luka Doncic"
+nba_filtered$Player[32] <- "Nikola Jokic"
+nba_filtered$Player[33] <- "Nikola Vucevic"
+
+# tidy format that can be plotted with ggplot
+nba_tidy <- nba_filtered %>%
+  select(Player, PPG_regular, RPG_regular, APG_regular, PPG_playoffs, RPG_playoffs, APG_playoffs) %>%
+  gather(key, value, -Player) %>%
+  separate(key, into = c("Attribute", "Season"), sep = "_") %>%
+  spread(Season, value)
+
+# pivot the data to a wide format that can be used with geom_point()
+nba_pivot<- nba_tidy %>%
+  pivot_longer(cols = c("regular", "playoffs"), names_to = "Season", values_to = "amount") %>%
+  separate(Attribute, into = c("Stat", "Type"), sep = "_") %>%
+  pivot_wider(names_from = Season, values_from = amount)
+# set the levels in desired order
+nba_pivot$Stat <- factor(nba_pivot$Stat, levels = c("PPG", "RPG", "APG"))
+
+age <- nba %>%
+  select(Player, Age.regular) %>%
+  distinct(Player, .keep_all = TRUE) %>%
+  rename(Age = Age.regular)
+nba_pivot_for_age <- merge(nba_pivot, age, by = "Player")
+
+# first join dfs to delete players in the regular season that do not appear in the playoffs
+joined_filtered <- merge(playoffs, regular, by='Player')
+
+# now we made a subset of the joined dataframes that contains the relevant categories we want to look at for "success" in the NBA.
+joined_subset <- joined_filtered %>%
+  select(Player, Pos.x, MP.x, MP.y,
+         PTS.x, AST.x, TRB.x,
+         PTS.y, AST.y, TRB.y,) %>%
+  rename(
+    Position = Pos.x,
+    Playoff_Mins_Played = MP.x,
+    Regular_Mins_Played = MP.y,
+    Playoffs_PTS = PTS.x, 
+    Playoffs_AST = AST.x, 
+    Playoffs_TRB = TRB.x, 
+    Regular_PTS = PTS.y, 
+    Regular_AST = AST.y, 
+    Regular_TRB = TRB.y) %>%
+  distinct(Player, .keep_all = TRUE)
+joined_subset$Position<- as.factor(joined_subset$Position)
+
+# Normalize statistics to minutes played
+joined_norm <- joined_subset %>%
+  mutate(
+    Playoffs_PTS = Playoffs_PTS/Playoff_Mins_Played, 
+    Playoffs_AST = Playoffs_AST/Playoff_Mins_Played, 
+    Playoffs_TRB = Playoffs_TRB/Playoff_Mins_Played, 
+    Regular_PTS = Regular_PTS/Regular_Mins_Played, 
+    Regular_AST = Regular_AST/Regular_Mins_Played, 
+    Regular_TRB = Regular_TRB/Regular_Mins_Played) %>%
+  select(Player, Position,
+         Playoffs_PTS, Regular_PTS,
+         Playoffs_AST, Regular_AST,
+         Playoffs_TRB, Regular_TRB)
+
+# Take percent difference between playoff and regular performance for each player
+Percent_Diff <- joined_norm %>%
+  group_by(Player) %>%
+  summarize(
+    "Percent Difference Points (%)" = ((abs(Playoffs_PTS-Regular_PTS))/((Playoffs_PTS+Regular_PTS)/2))*100,
+    "Percent Difference Assists (%)" = ((abs(Playoffs_AST-Regular_AST))/((Playoffs_AST+Regular_AST)/2))*100,
+    "Percent Difference Rebounds (%)" = ((abs(Playoffs_TRB-Regular_TRB))/((Playoffs_TRB+Regular_TRB)/2))*100) %>%
+  mutate_if(is.double, round, digits = 2) 
+Percent_Diff$Position <- joined_subset$Position
+
+Percent_Diff_by_Players <- Percent_Diff %>%
+  select(Player, `Percent Difference Points (%)`,`Percent Difference Assists (%)`, `Percent Difference Rebounds (%)`)
+
+Percent_Diff_by_Position <- Percent_Diff %>%
+  group_by(Position) %>%
+  summarize(
+    "Mean Percent Difference Points (%)" = mean(`Percent Difference Points (%)`),
+    "Mean Percent Difference Assists (%)" = mean(`Percent Difference Assists (%)`),
+    "Mean Percent Difference Rebounds (%)" = mean(`Percent Difference Rebounds (%)`)) %>%
+  mutate_if(is.double, round, digits = 2)
+
+regular_subset <- regular %>%
+  select(Player, Pos, G, MP) %>%
+  rename(Position = Pos)
+
+regular_subset <- regular %>%
+  select(Player, Pos, G, MP) %>%
+  rename(Position = Pos) %>%
+  group_by(Position) %>%
+  summarize("Average Time Played Per Game" = mean(MP),
+         "Average Games Played" = mean(G))
+```
+
+```{r echo=FALSE, warning=FALSE}
+# Define UI
+ui <- navbarPage("Final Dashboard",
+  tabPanel("Home",
+    fillPage(
+      includeMarkdown("Home.rmd")
+    )
+  ),
+  tabPanel("Data",
+           tabsetPanel(
+  tabPanel("About Data",
+           includeMarkdown("Data1.rmd")),
+  tabPanel("Regular Season Data",
+           fluidRow(
+             column(width = 12, dataTableOutput("regular"))
+           )
+  ),
+  tabPanel("Playoff Data",
+           fluidRow(
+             column(width = 12, dataTableOutput("playoffs"))
+           )
+  ),
+   tabPanel("Data Transformations",
+           includeMarkdown("Data2.rmd")),
+)),
+  navbarMenu("EDA",
+  tabPanel("Transformations",
+                     tabsetPanel(
+  tabPanel("Combined",
+                    fluidRow(
+             column(width = 12, dataTableOutput("combined"))
+           )),
+  tabPanel("Player’s PPG, RPG, and APG in Regular v.s. Playoffs Season",
+           fluidRow(
+             column(width = 12, dataTableOutput("regvsplay"))
+           )
+  ),
+  tabPanel("Formatted for Summary Statistics",
+           fluidRow(
+             column(width = 12, dataTableOutput("summary"))
+           )))),
+  tabPanel("Q1: Summary Statistics + Data Descriptives",
+                                tabsetPanel(
+  tabPanel("Data Descriptives",
+                    verbatimTextOutput("descriptive1")),
+  tabPanel("Percent Difference by Player",
+           fluidRow(
+             column(width = 12, dataTableOutput("percentplayer"))
+           )
+  ),
+  tabPanel("Percent Difference by Position",
+           fluidRow(
+             column(width = 12, dataTableOutput("percentposition"))
+           )))),
+    tabPanel("Q2: Summary Statistics + Data Descriptives",
+                                tabsetPanel(
+  tabPanel("Data Descriptives",
+                    verbatimTextOutput("descriptive2")),
+  tabPanel("Data Descriptives for all variables of the regular season",
+  tags$div(
+    style = "height: 600px; overflow-y: scroll;",
+    verbatimTextOutput("descriptive3")
+  )
+),
+  tabPanel("Summary Statistics",
+           fluidRow(
+             column(width = 12, dataTableOutput("sumstat"))
+           ))))),
+navbarMenu("Question",
+  tabPanel("Question 1",
+    fillPage(
+      includeMarkdown("Q1.rmd"),
+    ),
+    fluidPage(
+      column(width=12,
+        wellPanel(
+          fluidRow(
+            column(width=6, selectInput("view", label="Graph:",
+              choices = list("PPG, RPG, APG by Player"=1, "Points Per Game by Player"=2, "Rebounds Per Game by Player"=3, "Assists Per Game by Player"=4),
+              selected = 1
+            )),
+            column(width=6, sliderInput("agerange", label = "Age Range:",
+              min = 18, max = 42, value = c(18,42), step = 1)
+            ) 
+          )
+        ),
+        mainPanel(width = 12,
+          conditionalPanel(
+            condition = "input.view == 1",
+            plotOutput('allplots')
+          ),
+          conditionalPanel(
+            condition = "input.view == 2",
+            plotOutput('ppg')
+          ),
+          conditionalPanel(
+            condition = "input.view == 3",
+            plotOutput('rpg')
+          ),
+          conditionalPanel(
+            condition = "input.view == 4",
+            plotOutput('apg')
+          )
+        )
+      )
+    )
+  ),
+  tabPanel("Question 2",
+    fillPage(
+      includeMarkdown("Q2.rmd"),
+    ),
+    fluidRow(
+      column(6, 
+        plotlyOutput("boxplot_main"), 
+        checkboxInput("outliers", "Toggle Boxpoints"),
+        checkboxInput("boxmean", "Toggle Mean/SD", FALSE),
+        checkboxInput("filter", "Filter Boxplots with < 5 Points")
+      ),
+      column(6, 
+        plotlyOutput("boxplot_main2"),
+        checkboxInput("outliers2", "Toggle Boxpoint"),
+        checkboxInput("boxmean2", "Toggle Mean/SD", FALSE),
+        checkboxInput("filter2", "Filter Boxplots with < 5 Points")
+      )
+    )
+  )
+),
+  tabPanel("Summary",
+    fillPage(
+      includeMarkdown("Summary.rmd")
+    )
+  ),
+  tabPanel("Citations",
+    fillPage(
+      includeMarkdown("Citations.rmd")
+    )
+  ),
+    div(
+  style = "position: relative; min-height: 100vh;",
+  fluidRow(
+    column(
+      width = 12,
+      tags$hr(),
+      tags$footer(
+        style = "position: absolute; bottom: 0; left: 0; right: 0; text-align: center;",
+        "DS:2003 Fall 2023 Final Dashboard. Dataset: Kaggle, 2021-2022 NBA Player Stats. Created by Kevin, Eva, and Hank."
+      )
+    )
+  )
+)
+)
+
+
+
+# Define server
+server <- function(input, output) {
+  regular$Player <- iconv(regular$Player, to = "ASCII//TRANSLIT")
+  output$regular <- renderDataTable({
+    datatable(regular, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+  
+  output$playoffs <- renderDataTable({
+    datatable(playoffs, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+  
+  output$combined <- renderDataTable({
+    nba2 <- playoffs %>%
+      left_join(regular, by="Player", suffix = c(".playoffs", ".regular"))
+    datatable(nba2, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+  
+    output$regvsplay <- renderDataTable({
+    datatable(nba_filtered, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+    
+    output$summary <- renderDataTable({
+    datatable(Percent_Diff, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+    
+      output$descriptive1 <- renderPrint({
+    summary(joined_norm)
+  })
+          output$percentplayer <- renderDataTable({
+    datatable(Percent_Diff_by_Players, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+              output$percentposition <- renderDataTable({
+    datatable(Percent_Diff_by_Position, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+                   output$descriptive2 <- renderPrint({
+    summary(regular_subset)
+  })
+                    output$descriptive3 <- renderPrint({
+    summary(regular)
+  })
+                        output$sumstat <- renderDataTable({
+    datatable(regular_subset, options = list(encoding = "UTF-8", scrollX= TRUE, scrollY = "400px"))
+  })
+      output$ppg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size =3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+          scale_shape_manual(name = "Averages", values = c("PPG" = 19)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average PPG") +
+          labs(x = "Player", y ="Points Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
+        })
+      output$rpg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size =3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+            ylim(0,20)+
+          scale_shape_manual(name = "Averages", values = c("RPG" = 15)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average RPG") +
+          labs(x = "Player", y ="Rebounds Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
+        })
+      
+      output$apg <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size = 3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+            ylim(0,15)+
+          scale_shape_manual(name = "Averages", values = c("APG" = 17)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Average APG") +
+          labs(x = "Player", y ="Assists Per Game") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
+        })      
+      output$allplots <- renderPlot({
+        nba_pivot_for_age %>%
+          filter(Age >= input$agerange[1] & Age <= input$agerange[2]) %>%
+          ggplot(aes(Player, regular, color = "Regular")) +
+          geom_point(aes(shape = Stat), size = 3) +
+          geom_point(aes(Player, playoffs, color = "Playoff", shape = Stat), size = 3, alpha = 0.6) +
+          facet_grid(Stat ~ ., scales = "free_y") +
+          scale_shape_manual(name = "Averages", values = c("PPG" = 19, "APG" = 17, "RPG" = 15)) +
+          scale_color_manual(name = "Season", values = c("Regular" = "#4EBCB6", "Playoff" = "#2E6039")) +
+          labs(title = "Regular Season vs Playoff Season Averages") +
+          labs(x = "Player", y ="") +
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
+        })
+  options = list(height = 600)
+
+# Boxplots
+
+ # Create initial plot 1
+  output$boxplot_main <- renderPlotly({
+    plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box',
+            fillcolor='#2E603980', line=list(color='#0B1D5180'),
+            boxpoints = 'all', jitter = 0.3,
+            marker=list(color='#2E603980')) %>%
+      layout(title = 'Games Played Based on Position',
+             xaxis = list(title = 'Position'),
+             yaxis = list(title = 'Games Played'))
+  })
+  
+  # Update plot 1 based on checkbox input
+  observeEvent(input$filter, {
+    if (input$filter) {
+      # Filter out boxplots with < 5 points
+      filtered_b1 <- regular_b1 %>%
+        group_by(Position) %>%
+        filter(n() > 5)
+      
+      # Update plot 1
+      output$boxplot_main <- renderPlotly({
+        plot_ly(filtered_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                fillcolor='#2E603980', line=list(color='#0B1D5180'),
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#2E603980')) %>%
+          layout(title = 'Games Played Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Games Played'))
+      })
+    } else {
+      # Reset plot 1 to initial state
+      output$boxplot_main <- renderPlotly({
+        plot_ly(regular_b1, x = ~Position, y = ~Games_Played, type = 'box', boxpoints = ifelse(input$outliers, "all", FALSE), boxmean = ifelse(input$boxmean, "sd", FALSE),
+                fillcolor='#2E603980', line=list(color='#0B1D5180'),
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#2E603980')) %>%
+          layout(title = 'Games Played Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Games Played'))
+      })
+    }
+  })
+   # Create initial plot 2
+  output$boxplot_main2 <- renderPlotly({
+    plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box',
+            fillcolor='#4EBCB680', line =list(color='#0B1D5180'),
+            boxpoints = 'all', jitter = 0.3,
+            marker=list(color='#4EBCB680')) %>%
+      layout(title = 'Minutes Played Per Game Based on Position',
+             xaxis = list(title = 'Position'),
+             yaxis = list(title = 'Minutes Played per Game'))
+  })
+  # Update plot based on checkbox input
+  observeEvent(input$filter2, {
+    if (input$filter2) {
+      # Filter out boxplots with < 5 points
+      filtered_b2 <- regular_b2 %>%
+        group_by(Position) %>%
+        filter(n() > 5)
+      
+      # Update plot 2
+      output$boxplot_main2 <- renderPlotly({
+        plot_ly(filtered_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box',
+                fillcolor ='#4EBCB680', line =list(color='#0B1D5180'),
+                boxpoints = ifelse(input$outliers2, "all", FALSE),
+                boxmean = ifelse(input$boxmean2, "sd", FALSE),
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#4EBCB680')) %>%
+          layout(title = 'Minutes Played Per Game Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Minutes Played per Game'))
+      })
+    } else {
+      # Reset plot 2 to initial state
+      output$boxplot_main2 <- renderPlotly({
+        plot_ly(regular_b2, x = ~Position, y = ~Minutes_Played_Per_Game, type = 'box',
+                fillcolor='#4EBCB680', line=list(color='#0B1D5180'),
+                boxpoints = ifelse(input$outliers2, "all", FALSE),
+                boxmean = ifelse(input$boxmean2, "sd", FALSE),
+                boxpoints = 'all', jitter = 0.3,
+                marker=list(color='#4EBCB680')) %>%
+          layout(title = 'Minutes Played Per Game Based on Position',
+                 xaxis = list(title = 'Position'),
+                 yaxis = list(title = 'Minutes Played per Game'))
+      })
+    }
+  })
+}
+# Run the app
+shinyApp(ui, server, options = list(height = 1200))
+```

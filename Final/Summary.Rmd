@@ -5,4 +5,6 @@ output:
     theme: cosmo
 ---
 
+### Summary
 Overall, our graphs provide information about player performance from the playoffs and regular season and inform stakeholders about discrepancies between games played and play time for the various positions. Upon viewing the facet-wrapped scatter plot graph, we see that generally players perform around or just slightly below their averages from the regular season onto the playoff season. Since these values are so close, the graph would likely support a claim that individual player performance does not change much between the playoffs and regular season. The boxplots depict how the median and interquartiles for games played and minutes played per game change between positions. This graphical representation can help coaches determine which positions are really vital, in that they play many games and for long periods of time; where people get the most exhausted and may need to be substituted; and give insight into which positions have players in for different amounts of time than the number of games played would suggest. These insights are important to the game because they could be useful for coaches strategizing and for analysts commenting on games.
+
