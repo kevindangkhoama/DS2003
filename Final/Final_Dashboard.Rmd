@@ -209,7 +209,7 @@ ui <- navbarPage("Final Dashboard",
                                 tabsetPanel(
   tabPanel("Data Descriptives",
                     verbatimTextOutput("descriptive2")),
-  tabPanel("Data Descriptives for all variables of the regular season",
+  tabPanel("Data Descriptives for All Variables of the Regular Season",
   tags$div(
     style = "height: 600px; overflow-y: scroll;",
     verbatimTextOutput("descriptive3")
@@ -219,7 +219,7 @@ ui <- navbarPage("Final Dashboard",
            fluidRow(
              column(width = 12, dataTableOutput("sumstat"))
            ))))),
-navbarMenu("Question",
+navbarMenu("Questions",
   tabPanel("Question 1",
     fillPage(
       includeMarkdown("Q1.rmd"),
