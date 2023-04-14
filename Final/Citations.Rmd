@@ -18,6 +18,10 @@ output:
 
 * Navbar Example. RStudio Shiny Gallery, RStudio, https://shiny.rstudio.com/gallery/navbar-example.html. Accessed 13 April 2023.
 
+* Pork Chop. "R Shiny input slider range values." StackOverflow. https://stackoverflow.com/questions/38181744/r-shiny-input-slider-range-values. Accessed 13 April 2023.
+
 * Robinson, Loan Kim. "Footer of the Application." Mastering Shiny, 1st ed., Chapman and Hall/CRC, 2020, https://bookdown.org/loankimrobinson/rshinybook/footer-of-the-application.html. Accessed 13 April 2023.
 
 * "R Range Slider." Plotly, https://plotly.com/r/range-slider/. Accessed 13 April 2023.
+
+* SBista. "Resize shiny wellPannel to contents and place a close button." StackOverflow. https://stackoverflow.com/questions/51659266/resize-shiny-wellpanel-to-contents-and-place-a-close-button. Accessed 13 April 2023.
