@@ -240,19 +240,19 @@ navbarMenu("Question",
         mainPanel(width = 12,
           conditionalPanel(
             condition = "input.view == 1",
-            plotOutput('allplots')
+            plotOutput('allplots', height = 600, width = 800)
           ),
           conditionalPanel(
             condition = "input.view == 2",
-            plotOutput('ppg')
+            plotOutput('ppg', height = 600, width = 800)
           ),
           conditionalPanel(
             condition = "input.view == 3",
-            plotOutput('rpg')
+            plotOutput('rpg', height = 600, width = 800)
           ),
           conditionalPanel(
             condition = "input.view == 4",
-            plotOutput('apg')
+            plotOutput('apg', height = 600, width = 800)
           )
         )
       )
@@ -359,6 +359,9 @@ server <- function(input, output) {
           labs(title = "Regular Season vs Playoff Season Average PPG") +
           labs(x = "Player", y ="Points Per Game") +
           theme_minimal() +
+          theme(plot.title = element_text(size=18)) +
+          theme(axis.title.x = element_text(size=18)) +
+          theme(axis.title.y = element_text(size=18)) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
         })
       output$rpg <- renderPlot({
@@ -373,6 +376,9 @@ server <- function(input, output) {
           labs(title = "Regular Season vs Playoff Season Average RPG") +
           labs(x = "Player", y ="Rebounds Per Game") +
           theme_minimal() +
+          theme(plot.title = element_text(size=18)) +
+          theme(axis.title.x = element_text(size=18)) +
+          theme(axis.title.y = element_text(size=18)) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
         })
       
@@ -388,6 +394,9 @@ server <- function(input, output) {
           labs(title = "Regular Season vs Playoff Season Average APG") +
           labs(x = "Player", y ="Assists Per Game") +
           theme_minimal() +
+          theme(plot.title = element_text(size=18)) +
+          theme(axis.title.x = element_text(size=18)) +
+          theme(axis.title.y = element_text(size=18)) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
         })      
       output$allplots <- renderPlot({
@@ -402,6 +411,9 @@ server <- function(input, output) {
           labs(title = "Regular Season vs Playoff Season Averages") +
           labs(x = "Player", y ="") +
           theme_minimal() +
+          theme(plot.title = element_text(size=18)) +
+          theme(axis.title.x = element_text(size=18)) +
+          theme(axis.title.y = element_text(size=18)) +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 15))
         })
   options = list(height = 600)
