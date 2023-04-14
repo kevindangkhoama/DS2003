@@ -8,5 +8,4 @@ output:
 ### Question 1
 > How does NBA success translate from playoffs to the regular season in terms of PPG, RPG, AND APG?
 
-### Narrative for Question 1
 Despite the few outliers, most players performed close to their regular season averages in the playoffs. Although, many averages went down from the regular season to the playoffs. This could be due to the fact that the level of play increases in the playoffs, especially defensively, as the playoffs are what truly matters when it comes to winning. If the NBA wants all players to play at their peak level throughout the season and not just in the playoffs, they might want to consider reducing the number of games during the regular season. This graph directed toward NBA analysts and NBA coaches. Many analysts discuss who will be in the playoffs and if they will fail to perform under pressure. These graphs could provide good insight into who might over-perform or under-perform in the playoffs. This graph may also provide good information to coaches when considering who to trade for or sign later in the season if they want a better chance at winning the NBA finals.
